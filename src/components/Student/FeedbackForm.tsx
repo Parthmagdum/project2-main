@@ -1,51 +1,88 @@
 import React, { useState } from 'react';
-import { Send, LogOut, CheckCircle } from 'lucide-react';
+import { Send, LogOut, CheckCircle, ArrowLeft, ListChecks } from 'lucide-react';
+import { feedbackStorage } from '../../utils/feedbackStorage';
+import { classifyFeedbackWithGemini } from '../../utils/geminiApi';
+import { FeedbackItem } from '../../types';
 
 interface FeedbackFormProps {
   studentId: string;
   onLogout: () => void;
+  onBack?: () => void;
 }
 
-export const FeedbackForm: React.FC<FeedbackFormProps> = ({ studentId, onLogout }) => {
+export const FeedbackForm: React.FC<FeedbackFormProps> = ({ studentId, onLogout, onBack }) => {
   const [submitted, setSubmitted] = useState(false);
   const [isAnonymous, setIsAnonymous] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
-    courseId: '',
     courseName: '',
-    instructor: '',
     department: '',
     semester: 'Fall 2024',
     feedback: '',
     studentName: ''
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
     
-    // Simulate feedback submission
-    console.log('Feedback submitted:', {
-      ...formData,
-      studentId: studentId,
-      isAnonymous: isAnonymous,
-      submittedAt: new Date()
-    });
+    try {
+      // Use Gemini API for classification
+      console.log('🤖 Classifying feedback with Gemini API...');
+      const classification = await classifyFeedbackWithGemini(formData.feedback);
+      
+      // Create feedback item - ALWAYS store real student ID
+      const feedbackItem: FeedbackItem = {
+        id: `FB_${Date.now()}`,
+        studentId: studentId, // ✅ ALWAYS store real student ID (even for anonymous)
+        courseId: 'N/A',
+        courseName: isAnonymous ? 'N/A' : formData.courseName,
+        instructor: 'N/A',
+        department: isAnonymous ? 'N/A' : formData.department,
+        semester: isAnonymous ? 'N/A' : formData.semester,
+        submittedAt: new Date(),
+        text: formData.feedback,
+        sentiment: classification.sentiment,
+        sentimentScore: classification.sentimentScore,
+        sentimentConfidence: Math.abs(classification.sentimentScore),
+        topics: classification.topics,
+        urgency: classification.sentiment === 'negative' && classification.sentimentScore < -0.5 ? 'high' : 'low',
+        flagged: classification.sentiment === 'negative' && classification.sentimentScore < -0.5,
+        processed: true,
+        isAnonymous: isAnonymous // ✅ Add flag to indicate if this is anonymous
+      };
+    
+      // Add student name if not anonymous
+      if (!isAnonymous && formData.studentName) {
+        (feedbackItem as any).studentName = formData.studentName;
+      }
+      
+      // Save to database/localStorage
+      await feedbackStorage.saveFeedback(feedbackItem);
+      
+      // Log for debugging
+      console.log('✅ Feedback submitted with Gemini classification:', feedbackItem);
 
-    setSubmitted(true);
-    
-    // Reset form after 3 seconds
-    setTimeout(() => {
-      setFormData({
-        courseId: '',
-        courseName: '',
-        instructor: '',
-        department: '',
-        semester: 'Fall 2024',
-        feedback: '',
-        studentName: ''
-      });
-      setIsAnonymous(true);
-      setSubmitted(false);
-    }, 3000);
+      setSubmitted(true);
+      
+      // Reset form after 3 seconds
+      setTimeout(() => {
+        setFormData({
+          courseName: '',
+          department: '',
+          semester: 'Fall 2024',
+          feedback: '',
+          studentName: ''
+        });
+        setIsAnonymous(true);
+        setSubmitted(false);
+        setIsSubmitting(false);
+      }, 3000);
+    } catch (error) {
+      console.error('❌ Error submitting feedback:', error);
+      alert('Failed to submit feedback. Please try again.');
+      setIsSubmitting(false);
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -63,14 +100,22 @@ export const FeedbackForm: React.FC<FeedbackFormProps> = ({ studentId, onLogout 
             <CheckCircle className="w-10 h-10 text-green-600" />
           </div>
           <h2 className="text-3xl font-bold text-gray-900 mb-4">Thank You!</h2>
-          <p className="text-gray-600 mb-6">
-            Your feedback has been submitted successfully. Your input helps us improve the learning experience for everyone.
+          <p className="text-gray-600 mb-4">
+            Your feedback has been submitted successfully{isAnonymous ? ' anonymously' : ' with your name'}. 
+            Your input helps us improve the learning experience for everyone.
           </p>
+          {!isAnonymous && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-6">
+              <p className="text-sm text-blue-800">
+                📧 Faculty may reach out to you for follow-up regarding your feedback.
+              </p>
+            </div>
+          )}
           <button
-            onClick={onLogout}
+            onClick={onBack || onLogout}
             className="bg-gray-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-gray-700 transition-colors"
           >
-            Submit Another Feedback
+            {onBack ? 'Back to Dashboard' : 'Submit Another Feedback'}
           </button>
         </div>
       </div>
@@ -81,17 +126,39 @@ export const FeedbackForm: React.FC<FeedbackFormProps> = ({ studentId, onLogout 
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-4">
       <div className="max-w-4xl mx-auto py-8">
         <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Course Feedback Form</h1>
-            <p className="text-gray-600 mt-2">Your feedback is anonymous and helps improve our courses</p>
+          <div className="flex items-center gap-4">
+            {onBack && (
+              <button
+                onClick={onBack}
+                className="flex items-center text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                <ArrowLeft className="w-5 h-5 mr-2" />
+                Back
+              </button>
+            )}
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Course Feedback Form</h1>
+              <p className="text-gray-600 mt-2">Your feedback is anonymous and helps improve our courses</p>
+            </div>
           </div>
-          <button
-            onClick={onLogout}
-            className="flex items-center text-gray-600 hover:text-gray-900 transition-colors"
-          >
-            <LogOut className="w-5 h-5 mr-2" />
-            Logout
-          </button>
+          <div className="flex items-center gap-3">
+            {onBack && (
+              <button
+                onClick={onBack}
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+              >
+                <ListChecks className="w-5 h-5" />
+                My Feedback
+              </button>
+            )}
+            <button
+              onClick={onLogout}
+              className="flex items-center text-gray-600 hover:text-gray-900 transition-colors"
+            >
+              <LogOut className="w-5 h-5 mr-2" />
+              Logout
+            </button>
+          </div>
         </div>
 
         <div className="bg-white rounded-2xl shadow-xl p-8">
@@ -160,90 +227,61 @@ export const FeedbackForm: React.FC<FeedbackFormProps> = ({ studentId, onLogout 
               </div>
             )}
 
-            <div className="grid md:grid-cols-2 gap-6">
-              <div>
-                <label htmlFor="courseId" className="block text-sm font-medium text-gray-700 mb-2">
-                  Course ID *
-                </label>
-                <input
-                  type="text"
-                  id="courseId"
-                  name="courseId"
-                  value={formData.courseId}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                  placeholder="e.g., CS101"
-                  required
-                />
-              </div>
+            {/* Conditional Course Details - Only for Named Feedback */}
+            {!isAnonymous && (
+              <div className="grid md:grid-cols-2 gap-6">
+                <div>
+                  <label htmlFor="courseName" className="block text-sm font-medium text-gray-700 mb-2">
+                    Course Name *
+                  </label>
+                  <input
+                    type="text"
+                    id="courseName"
+                    name="courseName"
+                    value={formData.courseName}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    placeholder="e.g., Introduction to Computer Science"
+                    required={!isAnonymous}
+                  />
+                </div>
 
-              <div>
-                <label htmlFor="courseName" className="block text-sm font-medium text-gray-700 mb-2">
-                  Course Name *
-                </label>
-                <input
-                  type="text"
-                  id="courseName"
-                  name="courseName"
-                  value={formData.courseName}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                  placeholder="e.g., Introduction to Computer Science"
-                  required
-                />
-              </div>
+                <div>
+                  <label htmlFor="department" className="block text-sm font-medium text-gray-700 mb-2">
+                    Department *
+                  </label>
+                  <input
+                    type="text"
+                    id="department"
+                    name="department"
+                    value={formData.department}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    placeholder="e.g., Computer Science"
+                    required={!isAnonymous}
+                  />
+                </div>
 
-              <div>
-                <label htmlFor="instructor" className="block text-sm font-medium text-gray-700 mb-2">
-                  Instructor Name *
-                </label>
-                <input
-                  type="text"
-                  id="instructor"
-                  name="instructor"
-                  value={formData.instructor}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                  placeholder="e.g., Prof. Anderson"
-                  required
-                />
+                <div>
+                  <label htmlFor="semester" className="block text-sm font-medium text-gray-700 mb-2">
+                    Semester *
+                  </label>
+                  <select
+                    id="semester"
+                    name="semester"
+                    value={formData.semester}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    required={!isAnonymous}
+                  >
+                    <option value="Fall 2024">Fall 2024</option>
+                    <option value="Spring 2024">Spring 2024</option>
+                    <option value="Summer 2024">Summer 2024</option>
+                    <option value="Winter 2024">Winter 2024</option>
+                  </select>
+                </div>
               </div>
-
-              <div>
-                <label htmlFor="department" className="block text-sm font-medium text-gray-700 mb-2">
-                  Department *
-                </label>
-                <input
-                  type="text"
-                  id="department"
-                  name="department"
-                  value={formData.department}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                  placeholder="e.g., Computer Science"
-                  required
-                />
-              </div>
-
-              <div>
-                <label htmlFor="semester" className="block text-sm font-medium text-gray-700 mb-2">
-                  Semester *
-                </label>
-                <select
-                  id="semester"
-                  name="semester"
-                  value={formData.semester}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                  required
-                >
-                  <option value="Fall 2024">Fall 2024</option>
-                  <option value="Spring 2024">Spring 2024</option>
-                  <option value="Summer 2024">Summer 2024</option>
-                  <option value="Winter 2024">Winter 2024</option>
-                </select>
-              </div>
-            </div>
+            )}
 
             <div>
               <label htmlFor="feedback" className="block text-sm font-medium text-gray-700 mb-2">
@@ -260,7 +298,7 @@ export const FeedbackForm: React.FC<FeedbackFormProps> = ({ studentId, onLogout 
                 required
               />
               <p className="mt-2 text-sm text-gray-500">
-                Minimum 50 characters. Be specific and constructive in your feedback.
+                Be specific and constructive in your feedback.
               </p>
             </div>
 
@@ -289,9 +327,7 @@ export const FeedbackForm: React.FC<FeedbackFormProps> = ({ studentId, onLogout 
                 type="button"
                 onClick={() => {
                   setFormData({
-                    courseId: '',
                     courseName: '',
-                    instructor: '',
                     department: '',
                     semester: 'Fall 2024',
                     feedback: '',
@@ -305,11 +341,11 @@ export const FeedbackForm: React.FC<FeedbackFormProps> = ({ studentId, onLogout 
               </button>
               <button
                 type="submit"
-                disabled={formData.feedback.length < 50}
-                className="flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors shadow-lg hover:shadow-xl disabled:bg-gray-300 disabled:cursor-not-allowed"
+                disabled={isSubmitting}
+                className="flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors shadow-lg hover:shadow-xl disabled:bg-gray-400 disabled:cursor-not-allowed"
               >
                 <Send className="w-5 h-5 mr-2" />
-                Submit Feedback
+                {isSubmitting ? 'Analyzing with AI...' : 'Submit Feedback'}
               </button>
             </div>
           </form>

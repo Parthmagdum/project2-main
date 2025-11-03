@@ -8,6 +8,8 @@ interface FeedbackCardProps {
 }
 
 export const FeedbackCard: React.FC<FeedbackCardProps> = ({ feedback, onViewDetails }) => {
+  const isAnonymous = feedback.isAnonymous || false; // ✅ Use the isAnonymous flag
+  
   const getSentimentIcon = () => {
     switch (feedback.sentiment) {
       case 'positive': return <TrendingUp className="h-4 w-4 text-green-600" />;
@@ -45,8 +47,18 @@ export const FeedbackCard: React.FC<FeedbackCardProps> = ({ feedback, onViewDeta
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center space-x-2">
           {getSentimentIcon()}
-          <span className="font-medium text-gray-900">{feedback.courseName}</span>
+          {!isAnonymous && (
+            <span className="font-medium text-gray-900">{feedback.courseName}</span>
+          )}
+          {isAnonymous && (
+            <span className="font-medium text-gray-900">Anonymous Feedback</span>
+          )}
           {feedback.flagged && <AlertTriangle className="h-4 w-4 text-red-500" />}
+          {isAnonymous && (
+            <span className="px-2 py-1 text-xs font-medium bg-gray-200 text-gray-700 rounded-full">
+              Anonymous
+            </span>
+          )}
         </div>
         <div className="flex items-center space-x-2">
           {getUrgencyBadge()}
@@ -61,10 +73,16 @@ export const FeedbackCard: React.FC<FeedbackCardProps> = ({ feedback, onViewDeta
       </p>
       
       <div className="flex items-center justify-between text-xs text-gray-500">
-        <div className="space-x-4">
-          <span>Instructor: {feedback.instructor}</span>
-          <span>Dept: {feedback.department}</span>
-        </div>
+        {!isAnonymous ? (
+          <div className="space-x-4">
+            <span>Instructor: {feedback.instructor}</span>
+            <span>Dept: {feedback.department}</span>
+          </div>
+        ) : (
+          <div className="text-gray-400 italic">
+            <span>Course details hidden for privacy</span>
+          </div>
+        )}
         <div className="flex items-center space-x-2">
           <span>Confidence: {(feedback.sentimentConfidence * 100).toFixed(0)}%</span>
           <span className="w-1 h-1 bg-gray-400 rounded-full"></span>

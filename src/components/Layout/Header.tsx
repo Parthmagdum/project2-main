@@ -1,14 +1,13 @@
 import React from 'react';
-import { Bell, Settings, User, LogOut, Search } from 'lucide-react';
+import { Settings, User, LogOut, Search } from 'lucide-react';
 import { User as UserType } from '../../types';
 
 interface HeaderProps {
   user: UserType;
-  alertCount: number;
   onLogout: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ user, alertCount, onLogout }) => {
+export const Header: React.FC<HeaderProps> = ({ user, onLogout }) => {
   return (
     <header className="bg-white border-b border-gray-200 px-6 py-4">
       <div className="flex items-center justify-between">
@@ -29,15 +28,6 @@ export const Header: React.FC<HeaderProps> = ({ user, alertCount, onLogout }) =>
               placeholder="Search feedback..."
               className="pl-10 pr-4 py-2 w-64 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
-          </div>
-          
-          <div className="relative">
-            <Bell className="h-6 w-6 text-gray-600 cursor-pointer hover:text-gray-800 transition-colors" />
-            {alertCount > 0 && (
-              <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                {alertCount}
-              </span>
-            )}
           </div>
           
           <Settings className="h-6 w-6 text-gray-600 cursor-pointer hover:text-gray-800 transition-colors" />

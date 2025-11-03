@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Header } from './components/Layout/Header';
 import { Sidebar } from './components/Layout/Sidebar';
 import { DashboardView } from './views/DashboardView';
@@ -9,22 +9,41 @@ import { RoleSelection } from './components/Auth/RoleSelection';
 import { AdminLogin } from './components/Auth/AdminLogin';
 import { StudentLogin } from './components/Auth/StudentLogin';
 import { FeedbackForm } from './components/Student/FeedbackForm';
+import { StudentDashboard } from './components/Student/StudentDashboard';
+import { feedbackStorage } from './utils/feedbackStorage';
 import { 
   mockUser, 
-  mockFeedback, 
   mockAlerts, 
   mockRecommendations, 
   mockAnalytics 
 } from './data/mockData';
-import { Alert } from './types';
+import { Alert, FeedbackItem } from './types';
 
-type AuthState = 'role-selection' | 'admin-login' | 'student-login' | 'admin-dashboard' | 'student-feedback';
+type AuthState = 'role-selection' | 'admin-login' | 'student-login' | 'admin-dashboard' | 'student-feedback' | 'student-dashboard';
 
 function App() {
   const [authState, setAuthState] = useState<AuthState>('role-selection');
   const [studentId, setStudentId] = useState<string>('');
   const [activeView, setActiveView] = useState('dashboard');
   const [alerts, setAlerts] = useState(mockAlerts);
+  const [feedback, setFeedback] = useState<FeedbackItem[]>([]);
+  const [dashboardKey, setDashboardKey] = useState(0); // Key to force remount
+
+  // Load feedback from Supabase on mount and when returning to admin dashboard
+  useEffect(() => {
+    const loadFeedback = async () => {
+      if (authState === 'admin-dashboard') {
+        const storedFeedback = await feedbackStorage.getAllFeedback();
+        setFeedback(storedFeedback);
+      }
+    };
+    loadFeedback();
+  }, [authState, activeView]); // Re-load when view changes
+
+  const reloadFeedback = async () => {
+    const storedFeedback = await feedbackStorage.getAllFeedback();
+    setFeedback(storedFeedback);
+  };
 
   const handleUpdateAlert = (alertId: string, newStatus: Alert['status']) => {
     setAlerts(prevAlerts => 
@@ -53,7 +72,7 @@ function App() {
 
   const handleStudentLogin = (id: string) => {
     setStudentId(id);
-    setAuthState('student-feedback');
+    setAuthState('student-dashboard');
   };
 
   const handleLogout = () => {
@@ -62,12 +81,24 @@ function App() {
     setActiveView('dashboard');
   };
 
+  const handleSubmitNewFeedback = () => {
+    setAuthState('student-feedback');
+  };
+
+  const handleBackToStudentDashboard = () => {
+    setAuthState('student-dashboard');
+    setDashboardKey(prev => prev + 1); // Increment key to force remount and reload data
+  };
+
   const renderView = () => {
+    // Calculate analytics from actual feedback
+    const analytics = feedbackStorage.calculateAnalytics(feedback);
+    
     switch (activeView) {
       case 'dashboard':
-        return <DashboardView analytics={mockAnalytics} alerts={alerts} />;
+        return <DashboardView analytics={analytics} alerts={alerts} />;
       case 'feedback':
-        return <FeedbackView feedback={mockFeedback} />;
+        return <FeedbackView feedback={feedback} onFeedbackUpdated={reloadFeedback} />;
       case 'alerts':
         return <AlertsView alerts={alerts} onUpdateAlert={handleUpdateAlert} />;
       case 'insights':
@@ -125,8 +156,6 @@ function App() {
     }
   };
 
-  const openAlertsCount = alerts.filter(alert => alert.status === 'open').length;
-
   // Render authentication screens
   if (authState === 'role-selection') {
     return <RoleSelection onSelectRole={handleRoleSelect} />;
@@ -140,8 +169,12 @@ function App() {
     return <StudentLogin onLogin={handleStudentLogin} onBack={() => setAuthState('role-selection')} />;
   }
 
+  if (authState === 'student-dashboard') {
+    return <StudentDashboard key={dashboardKey} studentId={studentId} onLogout={handleLogout} onSubmitNew={handleSubmitNewFeedback} />;
+  }
+
   if (authState === 'student-feedback') {
-    return <FeedbackForm studentId={studentId} onLogout={handleLogout} />;
+    return <FeedbackForm studentId={studentId} onLogout={handleLogout} onBack={handleBackToStudentDashboard} />;
   }
 
   // Render admin dashboard
@@ -151,7 +184,6 @@ function App() {
       <div className="flex-1">
         <Header 
           user={mockUser} 
-          alertCount={openAlertsCount}
           onLogout={handleLogout} 
         />
         <main className="flex-1">

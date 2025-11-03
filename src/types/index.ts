@@ -15,6 +15,11 @@ export interface FeedbackItem {
   urgency: 'low' | 'medium' | 'high' | 'critical';
   flagged: boolean;
   processed: boolean;
+  isAnonymous?: boolean; // ✅ Flag to indicate if feedback is anonymous
+  facultyReply?: string;
+  replyAt?: Date;
+  studentReply?: string;
+  studentReplyAt?: Date;
 }
 
 export interface TopicClassification {
