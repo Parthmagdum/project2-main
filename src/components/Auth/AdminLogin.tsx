@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Shield, ArrowLeft, AlertCircle } from 'lucide-react';
+import { Shield, ArrowLeft } from 'lucide-react';
 
 interface AdminLoginProps {
   onLogin: (email: string, password: string) => void;
@@ -13,11 +13,6 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLogin, onBack }) => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onLogin(email, password);
-  };
-
-  const fillDemoCredentials = () => {
-    setEmail('admin@university.edu');
-    setPassword('admin123');
   };
 
   return (
@@ -40,31 +35,6 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLogin, onBack }) => {
             <p className="text-gray-600 text-center">
               Access the feedback management dashboard
             </p>
-          </div>
-
-          {/* Demo Account Info */}
-          <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <div className="flex items-start">
-              <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5 mr-3 flex-shrink-0" />
-              <div className="flex-1">
-                <h3 className="font-semibold text-blue-900 mb-1">Demo Account</h3>
-                <p className="text-sm text-blue-800 mb-2">Use these credentials to access the demo:</p>
-                <div className="bg-white rounded p-2 text-sm font-mono">
-                  <div className="mb-1">
-                    <span className="text-gray-600">Email:</span> admin@university.edu
-                  </div>
-                  <div>
-                    <span className="text-gray-600">Password:</span> admin123
-                  </div>
-                </div>
-                <button
-                  onClick={fillDemoCredentials}
-                  className="mt-2 text-sm text-blue-600 hover:text-blue-700 font-semibold"
-                >
-                  Fill demo credentials
-                </button>
-              </div>
-            </div>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">

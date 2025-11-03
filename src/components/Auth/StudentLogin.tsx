@@ -8,6 +8,7 @@ interface StudentLoginProps {
 
 export const StudentLogin: React.FC<StudentLoginProps> = ({ onLogin, onBack }) => {
   const [studentId, setStudentId] = useState('');
+  const [password, setPassword] = useState('');
   const [agreed, setAgreed] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -53,16 +54,28 @@ export const StudentLogin: React.FC<StudentLoginProps> = ({ onLogin, onBack }) =
                 placeholder="Enter your student ID"
                 required
               />
-              <p className="mt-2 text-xs text-gray-500">
-                Your ID is used for verification only and will not be associated with your feedback.
-              </p>
+            </div>
+
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+                Password
+              </label>
+              <input
+                type="password"
+                id="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                placeholder="Enter your password"
+                required
+              />
             </div>
 
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <h3 className="font-semibold text-blue-900 mb-2">Privacy Notice</h3>
               <p className="text-sm text-blue-800">
                 Your feedback is completely anonymous. We do not store any identifying information 
-                with your responses. Your student ID is only used to prevent duplicate submissions.
+                with your responses. Your credentials are only used for secure access to the feedback system.
               </p>
             </div>
 

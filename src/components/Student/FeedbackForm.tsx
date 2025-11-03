@@ -8,13 +8,15 @@ interface FeedbackFormProps {
 
 export const FeedbackForm: React.FC<FeedbackFormProps> = ({ studentId, onLogout }) => {
   const [submitted, setSubmitted] = useState(false);
+  const [isAnonymous, setIsAnonymous] = useState(true);
   const [formData, setFormData] = useState({
     courseId: '',
     courseName: '',
     instructor: '',
     department: '',
     semester: 'Fall 2024',
-    feedback: ''
+    feedback: '',
+    studentName: ''
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -24,6 +26,7 @@ export const FeedbackForm: React.FC<FeedbackFormProps> = ({ studentId, onLogout 
     console.log('Feedback submitted:', {
       ...formData,
       studentId: studentId,
+      isAnonymous: isAnonymous,
       submittedAt: new Date()
     });
 
@@ -37,8 +40,10 @@ export const FeedbackForm: React.FC<FeedbackFormProps> = ({ studentId, onLogout 
         instructor: '',
         department: '',
         semester: 'Fall 2024',
-        feedback: ''
+        feedback: '',
+        studentName: ''
       });
+      setIsAnonymous(true);
       setSubmitted(false);
     }, 3000);
   };
@@ -91,6 +96,70 @@ export const FeedbackForm: React.FC<FeedbackFormProps> = ({ studentId, onLogout 
 
         <div className="bg-white rounded-2xl shadow-xl p-8">
           <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Anonymous/Named Feedback Selection */}
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-lg p-5">
+              <h3 className="font-semibold text-blue-900 mb-3 text-lg">Feedback Submission Type</h3>
+              <div className="space-y-3">
+                <label className="flex items-start cursor-pointer group">
+                  <input
+                    type="radio"
+                    name="feedbackType"
+                    checked={isAnonymous}
+                    onChange={() => setIsAnonymous(true)}
+                    className="mt-1 w-5 h-5 text-blue-600 border-gray-300 focus:ring-blue-500"
+                  />
+                  <div className="ml-3 flex-1">
+                    <div className="font-semibold text-gray-900 group-hover:text-blue-700">
+                      🔒 Anonymous Feedback
+                    </div>
+                    <p className="text-sm text-gray-600 mt-1">
+                      Your identity will remain completely confidential. Neither faculty nor administration will know who submitted this feedback.
+                    </p>
+                  </div>
+                </label>
+                
+                <label className="flex items-start cursor-pointer group">
+                  <input
+                    type="radio"
+                    name="feedbackType"
+                    checked={!isAnonymous}
+                    onChange={() => setIsAnonymous(false)}
+                    className="mt-1 w-5 h-5 text-blue-600 border-gray-300 focus:ring-blue-500"
+                  />
+                  <div className="ml-3 flex-1">
+                    <div className="font-semibold text-gray-900 group-hover:text-blue-700">
+                      👤 Include My Name
+                    </div>
+                    <p className="text-sm text-gray-600 mt-1">
+                      Submit feedback with your name. Faculty and administration will be able to identify you and may follow up directly.
+                    </p>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            {/* Conditional Name Field */}
+            {!isAnonymous && (
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <label htmlFor="studentName" className="block text-sm font-medium text-gray-700 mb-2">
+                  Your Full Name *
+                </label>
+                <input
+                  type="text"
+                  id="studentName"
+                  name="studentName"
+                  value={formData.studentName}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  placeholder="Enter your full name"
+                  required={!isAnonymous}
+                />
+                <p className="mt-2 text-xs text-yellow-800">
+                  ⚠️ Your name will be visible to faculty and administration with this feedback.
+                </p>
+              </div>
+            )}
+
             <div className="grid md:grid-cols-2 gap-6">
               <div>
                 <label htmlFor="courseId" className="block text-sm font-medium text-gray-700 mb-2">
@@ -195,9 +264,19 @@ export const FeedbackForm: React.FC<FeedbackFormProps> = ({ studentId, onLogout 
               </p>
             </div>
 
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-              <h3 className="font-semibold text-yellow-900 mb-2">Guidelines for Feedback</h3>
-              <ul className="text-sm text-yellow-800 space-y-1 list-disc list-inside">
+            <div className={`border-2 rounded-lg p-4 ${isAnonymous ? 'bg-green-50 border-green-200' : 'bg-orange-50 border-orange-200'}`}>
+              <h3 className={`font-semibold mb-2 ${isAnonymous ? 'text-green-900' : 'text-orange-900'}`}>
+                {isAnonymous ? '🔒 Submitting Anonymously' : '👤 Submitting with Your Name'}
+              </h3>
+              <p className={`text-sm mb-3 ${isAnonymous ? 'text-green-800' : 'text-orange-800'}`}>
+                {isAnonymous 
+                  ? 'Your identity is protected. This feedback cannot be traced back to you.'
+                  : 'Your name will be included with this feedback. Faculty may contact you for follow-up.'}
+              </p>
+              <h4 className={`font-semibold text-sm mb-1 ${isAnonymous ? 'text-green-900' : 'text-orange-900'}`}>
+                Guidelines for Feedback:
+              </h4>
+              <ul className={`text-sm space-y-1 list-disc list-inside ${isAnonymous ? 'text-green-800' : 'text-orange-800'}`}>
                 <li>Be honest and constructive</li>
                 <li>Focus on specific experiences and examples</li>
                 <li>Avoid personal attacks or offensive language</li>
@@ -208,14 +287,18 @@ export const FeedbackForm: React.FC<FeedbackFormProps> = ({ studentId, onLogout 
             <div className="flex justify-end space-x-4">
               <button
                 type="button"
-                onClick={() => setFormData({
-                  courseId: '',
-                  courseName: '',
-                  instructor: '',
-                  department: '',
-                  semester: 'Fall 2024',
-                  feedback: ''
-                })}
+                onClick={() => {
+                  setFormData({
+                    courseId: '',
+                    courseName: '',
+                    instructor: '',
+                    department: '',
+                    semester: 'Fall 2024',
+                    feedback: '',
+                    studentName: ''
+                  });
+                  setIsAnonymous(true);
+                }}
                 className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-colors"
               >
                 Clear Form
