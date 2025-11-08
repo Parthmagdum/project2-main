@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { Send, LogOut, CheckCircle, ArrowLeft, ListChecks } from 'lucide-react';
 import { feedbackStorage } from '../../utils/feedbackStorage';
 import { classifyFeedbackWithGemini } from '../../utils/geminiApi';
 import { FeedbackItem } from '../../types';
@@ -14,10 +13,14 @@ export const FeedbackForm: React.FC<FeedbackFormProps> = ({ studentId, onLogout,
   const [submitted, setSubmitted] = useState(false);
   const [isAnonymous, setIsAnonymous] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [overallRating, setOverallRating] = useState(0);
+  const [hoveredRating, setHoveredRating] = useState(0);
   const [formData, setFormData] = useState({
     courseName: '',
     department: '',
-    semester: 'Fall 2024',
+    semester: '1',
+    year: '1',
+    className: '',
     feedback: '',
     studentName: ''
   });
@@ -40,17 +43,19 @@ export const FeedbackForm: React.FC<FeedbackFormProps> = ({ studentId, onLogout,
         instructor: 'N/A',
         department: isAnonymous ? 'N/A' : formData.department,
         semester: isAnonymous ? 'N/A' : formData.semester,
+        year: isAnonymous ? undefined : formData.year, // ✅ Store year
+        className: isAnonymous ? undefined : formData.className, // ✅ Store class/section
         submittedAt: new Date(),
         text: formData.feedback,
         sentiment: classification.sentiment,
         sentimentScore: classification.sentimentScore,
         sentimentConfidence: Math.abs(classification.sentimentScore),
         topics: classification.topics,
-        urgency: classification.sentiment === 'negative' && classification.sentimentScore < -0.5 ? 'high' : 'low',
         flagged: classification.sentiment === 'negative' && classification.sentimentScore < -0.5,
         processed: true,
-        isAnonymous: isAnonymous // ✅ Add flag to indicate if this is anonymous
-      };
+        isAnonymous: isAnonymous, // ✅ Add flag to indicate if this is anonymous
+        overallRating: overallRating // ✅ Store the overall rating
+      } as any;
     
       // Add student name if not anonymous
       if (!isAnonymous && formData.studentName) {
@@ -70,11 +75,14 @@ export const FeedbackForm: React.FC<FeedbackFormProps> = ({ studentId, onLogout,
         setFormData({
           courseName: '',
           department: '',
-          semester: 'Fall 2024',
+          semester: '1',
+          year: '1',
+          className: '',
           feedback: '',
           studentName: ''
         });
         setIsAnonymous(true);
+        setOverallRating(0);
         setSubmitted(false);
         setIsSubmitting(false);
       }, 3000);
@@ -97,7 +105,7 @@ export const FeedbackForm: React.FC<FeedbackFormProps> = ({ studentId, onLogout,
       <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 flex items-center justify-center p-4">
         <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 text-center">
           <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <CheckCircle className="w-10 h-10 text-green-600" />
+            <i className="bi bi-check-circle text-green-600" style={{ fontSize: '2.5rem' }}></i>
           </div>
           <h2 className="text-3xl font-bold text-gray-900 mb-4">Thank You!</h2>
           <p className="text-gray-600 mb-4">
@@ -132,7 +140,7 @@ export const FeedbackForm: React.FC<FeedbackFormProps> = ({ studentId, onLogout,
                 onClick={onBack}
                 className="flex items-center text-gray-600 hover:text-gray-900 transition-colors"
               >
-                <ArrowLeft className="w-5 h-5 mr-2" />
+                <i className="bi bi-arrow-left mr-2"></i>
                 Back
               </button>
             )}
@@ -147,7 +155,7 @@ export const FeedbackForm: React.FC<FeedbackFormProps> = ({ studentId, onLogout,
                 onClick={onBack}
                 className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
               >
-                <ListChecks className="w-5 h-5" />
+                <i className="bi bi-list-check"></i>
                 My Feedback
               </button>
             )}
@@ -155,7 +163,7 @@ export const FeedbackForm: React.FC<FeedbackFormProps> = ({ studentId, onLogout,
               onClick={onLogout}
               className="flex items-center text-gray-600 hover:text-gray-900 transition-colors"
             >
-              <LogOut className="w-5 h-5 mr-2" />
+              <i className="bi bi-box-arrow-right mr-2"></i>
               Logout
             </button>
           </div>
@@ -247,19 +255,64 @@ export const FeedbackForm: React.FC<FeedbackFormProps> = ({ studentId, onLogout,
                 </div>
 
                 <div>
-                  <label htmlFor="department" className="block text-sm font-medium text-gray-700 mb-2">
-                    Department *
+                  <label htmlFor="className" className="block text-sm font-medium text-gray-700 mb-2">
+                    Class/Section *
                   </label>
                   <input
                     type="text"
+                    id="className"
+                    name="className"
+                    value={formData.className}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    placeholder="e.g., CS-101-A, Section A"
+                    required={!isAnonymous}
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="department" className="block text-sm font-medium text-gray-700 mb-2">
+                    Department *
+                  </label>
+                  <select
                     id="department"
                     name="department"
                     value={formData.department}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                    placeholder="e.g., Computer Science"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-white"
                     required={!isAnonymous}
-                  />
+                  >
+                    <option value="">Select Department</option>
+                    <option value="Computer Science Engineering">Computer Science Engineering</option>
+                    <option value="Information Technology">Information Technology</option>
+                    <option value="Electronics & Communication Engineering">Electronics & Communication Engineering</option>
+                    <option value="Electrical Engineering">Electrical Engineering</option>
+                    <option value="Mechanical Engineering">Mechanical Engineering</option>
+                    <option value="Civil Engineering">Civil Engineering</option>
+                    <option value="Chemical Engineering">Chemical Engineering</option>
+                    <option value="Automobile Engineering">Automobile Engineering</option>
+                    <option value="Aeronautical Engineering">Aeronautical Engineering</option>
+                    <option value="Biotechnology Engineering">Biotechnology Engineering</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label htmlFor="year" className="block text-sm font-medium text-gray-700 mb-2">
+                    Year *
+                  </label>
+                  <select
+                    id="year"
+                    name="year"
+                    value={formData.year}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-white"
+                    required={!isAnonymous}
+                  >
+                    <option value="1">First Year (FE)</option>
+                    <option value="2">Second Year (SE)</option>
+                    <option value="3">Third Year (TE)</option>
+                    <option value="4">Fourth Year (BE)</option>
+                  </select>
                 </div>
 
                 <div>
@@ -271,13 +324,17 @@ export const FeedbackForm: React.FC<FeedbackFormProps> = ({ studentId, onLogout,
                     name="semester"
                     value={formData.semester}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-white"
                     required={!isAnonymous}
                   >
-                    <option value="Fall 2024">Fall 2024</option>
-                    <option value="Spring 2024">Spring 2024</option>
-                    <option value="Summer 2024">Summer 2024</option>
-                    <option value="Winter 2024">Winter 2024</option>
+                    <option value="1">Semester 1</option>
+                    <option value="2">Semester 2</option>
+                    <option value="3">Semester 3</option>
+                    <option value="4">Semester 4</option>
+                    <option value="5">Semester 5</option>
+                    <option value="6">Semester 6</option>
+                    <option value="7">Semester 7</option>
+                    <option value="8">Semester 8</option>
                   </select>
                 </div>
               </div>
@@ -299,6 +356,45 @@ export const FeedbackForm: React.FC<FeedbackFormProps> = ({ studentId, onLogout,
               />
               <p className="mt-2 text-sm text-gray-500">
                 Be specific and constructive in your feedback.
+              </p>
+            </div>
+
+            {/* Overall Rating with 5 Stars */}
+            <div className="bg-gradient-to-r from-yellow-50 to-amber-50 border-2 border-yellow-200 rounded-lg p-6">
+              <label className="block text-sm font-medium text-gray-700 mb-3">
+                Overall Rating *
+              </label>
+              <div className="flex items-center justify-center gap-2">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    type="button"
+                    onClick={() => setOverallRating(star)}
+                    onMouseEnter={() => setHoveredRating(star)}
+                    onMouseLeave={() => setHoveredRating(0)}
+                    className="transition-all duration-200 transform hover:scale-110"
+                  >
+                    <i 
+                      className={`bi ${
+                        star <= (hoveredRating || overallRating) 
+                          ? 'bi-star-fill' 
+                          : 'bi-star'
+                      }`}
+                      style={{ 
+                        fontSize: '2.5rem',
+                        color: star <= (hoveredRating || overallRating) ? '#fbbf24' : '#d1d5db'
+                      }}
+                    ></i>
+                  </button>
+                ))}
+              </div>
+              <p className="text-center mt-3 text-sm font-medium text-gray-600">
+                {overallRating === 0 && 'Click on a star to rate'}
+                {overallRating === 1 && '⭐ Poor'}
+                {overallRating === 2 && '⭐⭐ Fair'}
+                {overallRating === 3 && '⭐⭐⭐ Good'}
+                {overallRating === 4 && '⭐⭐⭐⭐ Very Good'}
+                {overallRating === 5 && '⭐⭐⭐⭐⭐ Excellent'}
               </p>
             </div>
 
@@ -329,11 +425,14 @@ export const FeedbackForm: React.FC<FeedbackFormProps> = ({ studentId, onLogout,
                   setFormData({
                     courseName: '',
                     department: '',
-                    semester: 'Fall 2024',
+                    semester: '1',
+                    year: '1',
+                    className: '',
                     feedback: '',
                     studentName: ''
                   });
                   setIsAnonymous(true);
+                  setOverallRating(0);
                 }}
                 className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-colors"
               >
@@ -344,7 +443,7 @@ export const FeedbackForm: React.FC<FeedbackFormProps> = ({ studentId, onLogout,
                 disabled={isSubmitting}
                 className="flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors shadow-lg hover:shadow-xl disabled:bg-gray-400 disabled:cursor-not-allowed"
               >
-                <Send className="w-5 h-5 mr-2" />
+                <i className="bi bi-send mr-2"></i>
                 {isSubmitting ? 'Analyzing with AI...' : 'Submit Feedback'}
               </button>
             </div>

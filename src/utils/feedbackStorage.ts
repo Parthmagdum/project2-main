@@ -28,16 +28,18 @@ export const feedbackStorage = {
         instructor: item.instructor,
         department: item.department,
         semester: item.semester,
+        year: item.year, // ✅ Include year
+        className: item.class_name, // ✅ Include class/section
         submittedAt: new Date(item.created_at),
         text: item.feedback_text,
         sentiment: item.sentiment as 'positive' | 'negative' | 'neutral',
         sentimentScore: item.sentiment_score,
         sentimentConfidence: item.sentiment_confidence,
         topics: item.topics || [],
-        urgency: item.urgency as 'low' | 'medium' | 'high' | 'critical',
         flagged: item.flagged,
         processed: true,
         isAnonymous: item.is_anonymous || false, // ✅ Include anonymous flag
+        ...(item.overall_rating && { overallRating: item.overall_rating }), // ✅ Include overall rating
         ...(item.student_name && { studentName: item.student_name }),
         ...(item.faculty_reply && { facultyReply: item.faculty_reply }),
         ...(item.reply_at && { replyAt: new Date(item.reply_at) }),
@@ -87,13 +89,15 @@ export const feedbackStorage = {
           instructor: feedback.instructor || 'N/A',
           department: feedback.department,
           semester: feedback.semester,
+          year: feedback.year || null, // ✅ Store year
+          class_name: feedback.className || null, // ✅ Store class/section
           feedback_text: feedback.text,
           is_anonymous: feedback.isAnonymous || false, // ✅ Use the flag from feedback
+          overall_rating: (feedback as any).overallRating || null, // ✅ Store overall rating
           sentiment: feedback.sentiment,
           sentiment_score: feedback.sentimentScore,
           sentiment_confidence: feedback.sentimentConfidence,
           topics: feedback.topics,
-          urgency: feedback.urgency,
           flagged: feedback.flagged,
           created_at: feedback.submittedAt.toISOString()
         }]);
@@ -180,10 +184,16 @@ export const feedbackStorage = {
       ? feedback.reduce((sum, f) => sum + f.sentimentScore, 0) / totalFeedback
       : 0;
     
+    // Calculate average rating
+    const feedbackWithRatings = feedback.filter(f => f.overallRating && f.overallRating > 0);
+    const avgRating = feedbackWithRatings.length > 0
+      ? feedbackWithRatings.reduce((sum, f) => sum + (f.overallRating || 0), 0) / feedbackWithRatings.length
+      : 0;
+    
     // Count alerts
     const alertsGenerated = feedback.filter(f => f.flagged).length;
     
-    // Calculate topic distribution
+    // Calculate topic distribution - Count each topic occurrence in feedback
     const topicDistribution: any = {
       teaching_style: 0,
       course_content: 0,
@@ -193,18 +203,27 @@ export const feedbackStorage = {
       support_services: 0
     };
     
+    // Count topics from all feedback
     feedback.forEach(f => {
-      f.topics.forEach(topic => {
-        if (topicDistribution.hasOwnProperty(topic.topic)) {
-          topicDistribution[topic.topic]++;
-        }
-      });
+      if (f.topics && Array.isArray(f.topics)) {
+        f.topics.forEach(topic => {
+          const topicKey = topic.topic;
+          if (topicDistribution.hasOwnProperty(topicKey)) {
+            topicDistribution[topicKey]++;
+          }
+        });
+      }
     });
+    
+    console.log('📊 Topic Distribution:', topicDistribution);
+    console.log('📝 Total Feedback Analyzed:', totalFeedback);
     
     return {
       totalFeedback,
       processedFeedback,
       averageSentiment: avgSentiment,
+      averageRating: avgRating,
+      totalRatings: feedbackWithRatings.length,
       alertsGenerated,
       topicDistribution,
       sentimentTrends: [],
@@ -420,16 +439,18 @@ export const feedbackStorage = {
         instructor: item.instructor,
         department: item.department,
         semester: item.semester,
+        year: item.year, // ✅ Include year
+        className: item.class_name, // ✅ Include class/section
         submittedAt: new Date(item.created_at),
         text: item.feedback_text,
         sentiment: item.sentiment as 'positive' | 'negative' | 'neutral',
         sentimentScore: item.sentiment_score,
         sentimentConfidence: item.sentiment_confidence,
         topics: item.topics || [],
-        urgency: item.urgency as 'low' | 'medium' | 'high' | 'critical',
         flagged: item.flagged,
         processed: true,
         isAnonymous: item.is_anonymous || false, // ✅ Include anonymous flag
+        ...(item.overall_rating && { overallRating: item.overall_rating }), // ✅ Include overall rating
         ...(item.student_name && { studentName: item.student_name }),
         ...(item.faculty_reply && { facultyReply: item.faculty_reply }),
         ...(item.reply_at && { replyAt: new Date(item.reply_at) }),
@@ -527,7 +548,6 @@ export const feedbackStorage = {
           sentiment_score: classification.sentimentScore,
           sentiment_confidence: Math.abs(classification.sentimentScore),
           topics: classification.topics,
-          urgency: classification.sentiment === 'negative' && classification.sentimentScore < -0.5 ? 'high' : 'low',
           flagged: classification.sentiment === 'negative' && classification.sentimentScore < -0.5
         })
         .eq('id', feedbackId);

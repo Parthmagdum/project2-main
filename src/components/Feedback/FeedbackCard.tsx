@@ -1,5 +1,4 @@
 import React from 'react';
-import { AlertTriangle, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { FeedbackItem } from '../../types';
 
 interface FeedbackCardProps {
@@ -12,9 +11,9 @@ export const FeedbackCard: React.FC<FeedbackCardProps> = ({ feedback, onViewDeta
   
   const getSentimentIcon = () => {
     switch (feedback.sentiment) {
-      case 'positive': return <TrendingUp className="h-4 w-4 text-green-600" />;
-      case 'negative': return <TrendingDown className="h-4 w-4 text-red-600" />;
-      default: return <Minus className="h-4 w-4 text-yellow-600" />;
+      case 'positive': return <i className="bi bi-trending-up text-green-600"></i>;
+      case 'negative': return <i className="bi bi-trending-down text-red-600"></i>;
+      default: return <i className="bi bi-dash text-yellow-600"></i>;
     }
   };
 
@@ -24,21 +23,6 @@ export const FeedbackCard: React.FC<FeedbackCardProps> = ({ feedback, onViewDeta
       case 'negative': return 'border-l-red-500 bg-red-50';
       default: return 'border-l-yellow-500 bg-yellow-50';
     }
-  };
-
-  const getUrgencyBadge = () => {
-    const colors = {
-      low: 'bg-gray-100 text-gray-800',
-      medium: 'bg-yellow-100 text-yellow-800',
-      high: 'bg-orange-100 text-orange-800',
-      critical: 'bg-red-100 text-red-800'
-    };
-
-    return (
-      <span className={`px-2 py-1 text-xs font-medium rounded-full ${colors[feedback.urgency]}`}>
-        {feedback.urgency.toUpperCase()}
-      </span>
-    );
   };
 
   return (
@@ -53,15 +37,21 @@ export const FeedbackCard: React.FC<FeedbackCardProps> = ({ feedback, onViewDeta
           {isAnonymous && (
             <span className="font-medium text-gray-900">Anonymous Feedback</span>
           )}
-          {feedback.flagged && <AlertTriangle className="h-4 w-4 text-red-500" />}
+          {feedback.flagged && <i className="bi bi-exclamation-triangle text-red-500"></i>}
           {isAnonymous && (
             <span className="px-2 py-1 text-xs font-medium bg-gray-200 text-gray-700 rounded-full">
               Anonymous
             </span>
           )}
+          {/* Display Overall Rating */}
+          {feedback.overallRating && feedback.overallRating > 0 && (
+            <div className="flex items-center gap-1 px-2 py-1 bg-yellow-50 border border-yellow-200 rounded-full">
+              <i className="bi bi-star-fill text-yellow-500 text-xs"></i>
+              <span className="text-xs font-semibold text-yellow-700">{feedback.overallRating}/5</span>
+            </div>
+          )}
         </div>
         <div className="flex items-center space-x-2">
-          {getUrgencyBadge()}
           <span className="text-xs text-gray-500">
             {feedback.submittedAt.toLocaleDateString()}
           </span>
@@ -77,6 +67,7 @@ export const FeedbackCard: React.FC<FeedbackCardProps> = ({ feedback, onViewDeta
           <div className="space-x-4">
             <span>Instructor: {feedback.instructor}</span>
             <span>Dept: {feedback.department}</span>
+            {feedback.className && <span>Class: {feedback.className}</span>}
           </div>
         ) : (
           <div className="text-gray-400 italic">

@@ -1,12 +1,4 @@
 import React from 'react';
-import { 
-  MessageSquare, 
-  TrendingUp, 
-  AlertTriangle, 
-  Users,
-  Clock,
-  CheckCircle
-} from 'lucide-react';
 import { MetricCard } from '../components/Dashboard/MetricCard';
 import { SentimentChart } from '../components/Dashboard/SentimentChart';
 import { TopicDistribution } from '../components/Dashboard/TopicDistribution';
@@ -34,7 +26,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ analytics, alerts 
           value={analytics.totalFeedback.toLocaleString()}
           change="+12% this week"
           changeType="positive"
-          icon={MessageSquare}
+          icon="bi-chat-dots"
           iconColor="text-blue-600"
         />
         
@@ -43,7 +35,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ analytics, alerts 
           value={`${processingRate}%`}
           change="+3.2% improvement"
           changeType="positive"
-          icon={TrendingUp}
+          icon="bi-graph-up-arrow"
           iconColor="text-green-600"
         />
         
@@ -52,7 +44,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ analytics, alerts 
           value={openAlertsCount}
           change={openAlertsCount > 5 ? "Attention needed" : "Under control"}
           changeType={openAlertsCount > 5 ? "negative" : "positive"}
-          icon={AlertTriangle}
+          icon="bi-exclamation-triangle"
           iconColor="text-red-600"
         />
         
@@ -61,10 +53,47 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ analytics, alerts 
           value={analytics.averageSentiment > 0 ? `+${(analytics.averageSentiment * 100).toFixed(1)}%` : `${(analytics.averageSentiment * 100).toFixed(1)}%`}
           change={analytics.averageSentiment > 0.2 ? "Positive trend" : "Needs attention"}
           changeType={analytics.averageSentiment > 0.2 ? "positive" : "negative"}
-          icon={Users}
+          icon="bi-people"
           iconColor="text-purple-600"
         />
       </div>
+
+      {/* Average Rating Card - Show if ratings exist */}
+      {analytics.averageRating !== undefined && analytics.totalRatings !== undefined && analytics.totalRatings > 0 && (
+        <div className="bg-gradient-to-r from-yellow-50 to-amber-50 border-2 border-yellow-200 rounded-lg p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Average Overall Rating</h3>
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <i 
+                      key={star}
+                      className={`bi ${star <= Math.round(analytics.averageRating!) ? 'bi-star-fill' : 'bi-star'}`}
+                      style={{ 
+                        fontSize: '2rem',
+                        color: star <= Math.round(analytics.averageRating!) ? '#fbbf24' : '#d1d5db'
+                      }}
+                    ></i>
+                  ))}
+                </div>
+                <div>
+                  <span className="text-3xl font-bold text-yellow-600">
+                    {analytics.averageRating!.toFixed(2)}
+                  </span>
+                  <span className="text-gray-600 ml-1">/5.00</span>
+                </div>
+              </div>
+              <p className="text-sm text-gray-600 mt-2">
+                Based on {analytics.totalRatings} rating{analytics.totalRatings !== 1 ? 's' : ''} from student feedback
+              </p>
+            </div>
+            <div className="text-center">
+              <i className="bi bi-trophy text-yellow-500" style={{ fontSize: '3rem' }}></i>
+            </div>
+          </div>
+        </div>
+      )}
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <SentimentChart data={analytics.sentimentTrends} />
@@ -78,9 +107,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ analytics, alerts 
             <div key={alert.id} className="flex items-center space-x-4 p-3 bg-gray-50 rounded-lg">
               <div className="flex-shrink-0">
                 {alert.status === 'resolved' ? (
-                  <CheckCircle className="h-5 w-5 text-green-500" />
+                  <i className="bi bi-check-circle text-green-500" style={{ fontSize: '1.25rem' }}></i>
                 ) : (
-                  <Clock className="h-5 w-5 text-orange-500" />
+                  <i className="bi bi-clock text-orange-500" style={{ fontSize: '1.25rem' }}></i>
                 )}
               </div>
               <div className="flex-1">

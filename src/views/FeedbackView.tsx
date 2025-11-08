@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { Search, Filter, Download, MessageSquare, Send } from 'lucide-react';
 import { FeedbackCard } from '../components/Feedback/FeedbackCard';
 import { FeedbackItem } from '../types';
 import { feedbackStorage } from '../utils/feedbackStorage';
@@ -65,7 +64,7 @@ export const FeedbackView: React.FC<FeedbackViewProps> = ({ feedback, onFeedback
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0 mb-6">
           <div className="flex flex-1 items-center space-x-4">
             <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <i className="bi bi-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
               <input
                 type="text"
                 placeholder="Search feedback..."
@@ -76,7 +75,7 @@ export const FeedbackView: React.FC<FeedbackViewProps> = ({ feedback, onFeedback
             </div>
             
             <div className="flex items-center space-x-2">
-              <Filter className="h-4 w-4 text-gray-400" />
+              <i className="bi bi-funnel text-gray-400"></i>
               <select
                 value={sentimentFilter}
                 onChange={(e) => setSentimentFilter(e.target.value)}
@@ -91,7 +90,7 @@ export const FeedbackView: React.FC<FeedbackViewProps> = ({ feedback, onFeedback
           </div>
           
           <button className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-            <Download className="h-4 w-4" />
+            <i className="bi bi-download"></i>
             <span>Export Data</span>
           </button>
         </div>
@@ -147,10 +146,28 @@ export const FeedbackView: React.FC<FeedbackViewProps> = ({ feedback, onFeedback
                         <span className="font-medium text-gray-700">Department:</span>
                         <span className="ml-2">{selectedFeedback.department}</span>
                       </div>
+                      {selectedFeedback.year && (
+                        <div>
+                          <span className="font-medium text-gray-700">Year:</span>
+                          <span className="ml-2">
+                            {selectedFeedback.year === '1' ? 'First Year (FE)' :
+                             selectedFeedback.year === '2' ? 'Second Year (SE)' :
+                             selectedFeedback.year === '3' ? 'Third Year (TE)' :
+                             selectedFeedback.year === '4' ? 'Fourth Year (BE)' :
+                             selectedFeedback.year}
+                          </span>
+                        </div>
+                      )}
                       <div>
                         <span className="font-medium text-gray-700">Semester:</span>
                         <span className="ml-2">{selectedFeedback.semester}</span>
                       </div>
+                      {selectedFeedback.className && (
+                        <div>
+                          <span className="font-medium text-gray-700">Class/Section:</span>
+                          <span className="ml-2">{selectedFeedback.className}</span>
+                        </div>
+                      )}
                     </>
                   )}
                   {!selectedFeedback.isAnonymous && (
@@ -181,6 +198,76 @@ export const FeedbackView: React.FC<FeedbackViewProps> = ({ feedback, onFeedback
                     <span className="ml-2">{new Date(selectedFeedback.submittedAt).toLocaleDateString()}</span>
                   </div>
                 </div>
+
+                {/* Overall Rating - Always show section */}
+                <div className="bg-gradient-to-r from-yellow-50 to-amber-50 border-2 border-yellow-200 rounded-lg p-4">
+                  <h4 className="font-medium text-gray-700 mb-3 flex items-center gap-2">
+                    <i className="bi bi-star-fill text-yellow-500"></i>
+                    Overall Rating from Student
+                  </h4>
+                  {selectedFeedback.overallRating && selectedFeedback.overallRating > 0 ? (
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-1">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <i 
+                            key={star}
+                            className={`bi ${star <= selectedFeedback.overallRating! ? 'bi-star-fill' : 'bi-star'}`}
+                            style={{ 
+                              fontSize: '1.75rem',
+                              color: star <= selectedFeedback.overallRating! ? '#fbbf24' : '#d1d5db'
+                            }}
+                          ></i>
+                        ))}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-3xl font-bold text-yellow-600">
+                          {selectedFeedback.overallRating}
+                        </span>
+                        <span className="text-lg text-gray-600">/5</span>
+                      </div>
+                      <div className="ml-auto">
+                        {selectedFeedback.overallRating >= 4.5 && (
+                          <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
+                            Excellent
+                          </span>
+                        )}
+                        {selectedFeedback.overallRating >= 3.5 && selectedFeedback.overallRating < 4.5 && (
+                          <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
+                            Good
+                          </span>
+                        )}
+                        {selectedFeedback.overallRating >= 2.5 && selectedFeedback.overallRating < 3.5 && (
+                          <span className="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-sm font-medium">
+                            Average
+                          </span>
+                        )}
+                        {selectedFeedback.overallRating < 2.5 && (
+                          <span className="px-3 py-1 bg-red-100 text-red-700 rounded-full text-sm font-medium">
+                            Needs Attention
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-3 text-gray-500">
+                      <div className="flex items-center gap-1">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <i 
+                            key={star}
+                            className="bi bi-star"
+                            style={{ 
+                              fontSize: '1.75rem',
+                              color: '#d1d5db'
+                            }}
+                          ></i>
+                        ))}
+                      </div>
+                      <span className="text-sm italic">
+                        No rating provided with this feedback
+                      </span>
+                    </div>
+                  )}
+                </div>
                 
                 <div>
                   <h4 className="font-medium text-gray-700 mb-2">Feedback Text:</h4>
@@ -188,14 +275,46 @@ export const FeedbackView: React.FC<FeedbackViewProps> = ({ feedback, onFeedback
                 </div>
                 
                 <div>
-                  <h4 className="font-medium text-gray-700 mb-2">Topic Classifications:</h4>
-                  <div className="space-y-2">
-                    {selectedFeedback.topics.map((topic, index) => (
-                      <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded">
-                        <span className="capitalize">{topic.topic.replace('_', ' ')}</span>
-                        <span className="text-sm text-gray-600">
-                          {(topic.confidence * 100).toFixed(0)}% confidence
-                        </span>
+                  <h4 className="font-medium text-gray-700 mb-3 flex items-center gap-2">
+                    <i className="bi bi-tag text-blue-600"></i>
+                    Topic Classifications (AI Analysis)
+                  </h4>
+                  <div className="space-y-3">
+                    {selectedFeedback.topics
+                      .sort((a, b) => b.confidence - a.confidence) // Sort by confidence (highest first)
+                      .map((topic, index) => (
+                      <div key={index} className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-3">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <i className="bi bi-bookmark-check text-blue-600"></i>
+                            <span className="font-semibold capitalize text-gray-800">
+                              {topic.topic.replace(/_/g, ' ')}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <div className="w-24 bg-gray-200 rounded-full h-2">
+                              <div 
+                                className="bg-blue-600 h-2 rounded-full transition-all"
+                                style={{ width: `${topic.confidence * 100}%` }}
+                              ></div>
+                            </div>
+                            <span className="text-sm font-semibold text-blue-600 min-w-[50px]">
+                              {(topic.confidence * 100).toFixed(0)}%
+                            </span>
+                          </div>
+                        </div>
+                        {topic.keywords && topic.keywords.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-2">
+                            {topic.keywords.map((keyword, kidx) => (
+                              <span 
+                                key={kidx}
+                                className="px-2 py-1 bg-white border border-blue-300 text-blue-700 rounded text-xs font-medium"
+                              >
+                                {keyword}
+                              </span>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -204,7 +323,7 @@ export const FeedbackView: React.FC<FeedbackViewProps> = ({ feedback, onFeedback
                 {/* Faculty Reply Section */}
                 <div className="border-t border-gray-200 pt-4">
                   <h4 className="font-medium text-gray-700 mb-3 flex items-center gap-2">
-                    <MessageSquare className="w-5 h-5 text-purple-600" />
+                    <i className="bi bi-chat-square-text text-purple-600"></i>
                     Faculty Response
                   </h4>
                   
@@ -252,7 +371,7 @@ export const FeedbackView: React.FC<FeedbackViewProps> = ({ feedback, onFeedback
                         disabled={isSubmittingReply || !replyText.trim()}
                         className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        <Send className="w-4 h-4" />
+                        <i className="bi bi-send"></i>
                         {isSubmittingReply ? 'Submitting...' : 'Submit Reply'}
                       </button>
                     </div>

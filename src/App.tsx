@@ -4,7 +4,6 @@ import { Sidebar } from './components/Layout/Sidebar';
 import { DashboardView } from './views/DashboardView';
 import { FeedbackView } from './views/FeedbackView';
 import { AlertsView } from './views/AlertsView';
-import { InsightsView } from './views/InsightsView';
 import { RoleSelection } from './components/Auth/RoleSelection';
 import { AdminLogin } from './components/Auth/AdminLogin';
 import { StudentLogin } from './components/Auth/StudentLogin';
@@ -14,7 +13,6 @@ import { feedbackStorage } from './utils/feedbackStorage';
 import { 
   mockUser, 
   mockAlerts, 
-  mockRecommendations, 
   mockAnalytics 
 } from './data/mockData';
 import { Alert, FeedbackItem } from './types';
@@ -101,32 +99,6 @@ function App() {
         return <FeedbackView feedback={feedback} onFeedbackUpdated={reloadFeedback} />;
       case 'alerts':
         return <AlertsView alerts={alerts} onUpdateAlert={handleUpdateAlert} />;
-      case 'insights':
-        return <InsightsView recommendations={mockRecommendations} />;
-      case 'analytics':
-        return (
-          <div className="p-6">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Advanced Analytics</h2>
-            <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
-              <p className="text-gray-600">Advanced analytics dashboard coming soon...</p>
-              <p className="text-sm text-gray-500 mt-2">
-                This section will include detailed statistical analysis, predictive modeling, and comparative reports.
-              </p>
-            </div>
-          </div>
-        );
-      case 'reports':
-        return (
-          <div className="p-6">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Reports & Exports</h2>
-            <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
-              <p className="text-gray-600">Report generation dashboard coming soon...</p>
-              <p className="text-sm text-gray-500 mt-2">
-                Generate custom reports, schedule automated exports, and access historical data.
-              </p>
-            </div>
-          </div>
-        );
       case 'users':
         return (
           <div className="p-6">

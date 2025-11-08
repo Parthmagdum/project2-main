@@ -8,6 +8,11 @@ DROP POLICY IF EXISTS "Enable insert for all users" ON feedback;
 DROP POLICY IF EXISTS "Enable read for all users" ON feedback;
 DROP POLICY IF EXISTS "Enable update for all users" ON feedback;
 
+-- Drop existing tables if they exist (careful - this deletes data!)
+-- Comment out these lines if you want to keep existing data
+-- DROP TABLE IF EXISTS feedback CASCADE;
+-- DROP TABLE IF EXISTS students CASCADE;
+
 -- Create students table
 CREATE TABLE IF NOT EXISTS students (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -26,19 +31,22 @@ CREATE TABLE IF NOT EXISTS feedback (
   instructor TEXT DEFAULT 'N/A',
   department TEXT NOT NULL,
   semester TEXT NOT NULL,
+  year TEXT,
+  class_name TEXT,
   feedback_text TEXT NOT NULL,
   is_anonymous BOOLEAN DEFAULT false,
+  overall_rating INTEGER,
   sentiment TEXT NOT NULL,
   sentiment_score FLOAT NOT NULL,
   sentiment_confidence FLOAT NOT NULL,
   topics JSONB,
-  urgency TEXT NOT NULL,
   flagged BOOLEAN DEFAULT false,
   faculty_reply TEXT,
   reply_at TIMESTAMP WITH TIME ZONE,
   student_reply TEXT,
   student_reply_at TIMESTAMP WITH TIME ZONE,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  CONSTRAINT valid_rating CHECK (overall_rating IS NULL OR (overall_rating >= 1 AND overall_rating <= 5))
 );
 
 -- Create indexes for better query performance
@@ -47,6 +55,7 @@ CREATE INDEX IF NOT EXISTS idx_feedback_student_id ON feedback(student_id);
 CREATE INDEX IF NOT EXISTS idx_feedback_department ON feedback(department);
 CREATE INDEX IF NOT EXISTS idx_feedback_sentiment ON feedback(sentiment);
 CREATE INDEX IF NOT EXISTS idx_feedback_flagged ON feedback(flagged);
+CREATE INDEX IF NOT EXISTS idx_feedback_overall_rating ON feedback(overall_rating);
 CREATE INDEX IF NOT EXISTS idx_students_student_id ON students(student_id);
 
 -- Enable Row Level Security (RLS)

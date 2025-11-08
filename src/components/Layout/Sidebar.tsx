@@ -3,11 +3,8 @@ import {
   BarChart3, 
   MessageSquare, 
   AlertTriangle, 
-  Lightbulb, 
   Users, 
-  Settings,
-  FileText,
-  TrendingUp
+  Settings
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -19,9 +16,6 @@ const menuItems = [
   { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
   { id: 'feedback', label: 'Feedback Analysis', icon: MessageSquare },
   { id: 'alerts', label: 'Alerts', icon: AlertTriangle },
-  { id: 'insights', label: 'Insights & Recommendations', icon: Lightbulb },
-  { id: 'analytics', label: 'Advanced Analytics', icon: TrendingUp },
-  { id: 'reports', label: 'Reports', icon: FileText },
   { id: 'users', label: 'User Management', icon: Users },
   { id: 'settings', label: 'System Settings', icon: Settings }
 ];

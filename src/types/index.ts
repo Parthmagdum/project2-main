@@ -6,16 +6,18 @@ export interface FeedbackItem {
   instructor: string;
   department: string;
   semester: string;
+  year?: string; // ✅ Year information (1-4 or FE/SE/TE/BE)
+  className?: string; // ✅ Class/Section information
   submittedAt: Date;
   text: string;
   sentiment: 'positive' | 'negative' | 'neutral';
   sentimentScore: number;
   sentimentConfidence: number;
   topics: TopicClassification[];
-  urgency: 'low' | 'medium' | 'high' | 'critical';
   flagged: boolean;
   processed: boolean;
   isAnonymous?: boolean; // ✅ Flag to indicate if feedback is anonymous
+  overallRating?: number; // ✅ Overall rating (1-5 stars) given by student
   facultyReply?: string;
   replyAt?: Date;
   studentReply?: string;
@@ -66,6 +68,8 @@ export interface AnalyticsData {
   totalFeedback: number;
   processedFeedback: number;
   averageSentiment: number;
+  averageRating?: number;
+  totalRatings?: number;
   alertsGenerated: number;
   topicDistribution: { [key: string]: number };
   sentimentTrends: { date: string; positive: number; negative: number; neutral: number }[];

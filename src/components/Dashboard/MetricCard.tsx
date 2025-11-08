@@ -1,12 +1,11 @@
 import React from 'react';
-import { Video as LucideIcon } from 'lucide-react';
 
 interface MetricCardProps {
   title: string;
   value: string | number;
   change?: string;
   changeType?: 'positive' | 'negative' | 'neutral';
-  icon: LucideIcon;
+  icon: string; // Bootstrap icon class name (e.g., 'bi-chat-dots')
   iconColor?: string;
 }
 
@@ -15,7 +14,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
   value, 
   change, 
   changeType = 'neutral', 
-  icon: Icon,
+  icon,
   iconColor = 'text-blue-600'
 }) => {
   const getChangeColor = () => {
@@ -29,8 +28,8 @@ export const MetricCard: React.FC<MetricCardProps> = ({
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition-shadow duration-200">
       <div className="flex items-center justify-between mb-4">
-        <div className={`p-2 rounded-lg bg-opacity-10 ${iconColor.includes('blue') ? 'bg-blue-50' : iconColor.includes('green') ? 'bg-green-50' : iconColor.includes('red') ? 'bg-red-50' : 'bg-gray-50'}`}>
-          <Icon className={`h-6 w-6 ${iconColor}`} />
+        <div className={`p-2 rounded-lg bg-opacity-10 ${iconColor.includes('blue') ? 'bg-blue-50' : iconColor.includes('green') ? 'bg-green-50' : iconColor.includes('red') ? 'bg-red-50' : iconColor.includes('yellow') ? 'bg-yellow-50' : 'bg-gray-50'}`}>
+          <i className={`bi ${icon} ${iconColor}`} style={{ fontSize: '1.5rem' }}></i>
         </div>
         {change && (
           <span className={`text-sm font-medium ${getChangeColor()}`}>

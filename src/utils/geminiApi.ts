@@ -37,15 +37,33 @@ Analyze and return JSON with this exact structure:
   ]
 }
 
-Categories explanation:
-- teaching_style: Teaching methods, professor behavior, explanation quality, communication
-- course_content: Course material, syllabus, curriculum, relevance, topics covered
-- infrastructure: Facilities, classrooms, labs, equipment, wifi, furniture, buildings
-- assessment_methods: Exams, tests, grading, assignments, evaluation methods
-- classroom_environment: Class atmosphere, student interactions, discipline, behavior
-- support_services: Library, counseling, placement, medical, hostel, administrative support
+Categories and Keywords:
+1. teaching_style: 
+   - Keywords: teacher, professor, instructor, teaching, explanation, lecture, presentation, communication, methodology, approach, pedagogy, clarity, delivery, interactive, engaging, boring, interesting, knowledge, expertise, guidance, mentor, tutor, faculty behavior, teaching quality, teaching method
 
-Return multiple topics if applicable, with confidence scores. Higher confidence for more relevant topics.`;
+2. course_content: 
+   - Keywords: syllabus, curriculum, topics, material, content, course, subject, chapters, lessons, textbook, resources, notes, study material, course structure, modules, units, relevance, practical, theoretical, updated, outdated, comprehensive, depth, breadth
+
+3. infrastructure: 
+   - Keywords: classroom, lab, laboratory, facilities, equipment, wifi, internet, computer, projector, board, whiteboard, smartboard, furniture, desk, chair, building, room, air conditioning, AC, ventilation, lighting, cleanliness, maintenance, campus, library building, auditorium, seminar hall
+
+4. assessment_methods: 
+   - Keywords: exam, test, quiz, assignment, evaluation, grading, marks, scores, assessment, homework, project, practical exam, viva, presentation, internal marks, external exam, semester exam, continuous evaluation, fairness, difficulty level, question paper, answer sheet
+
+5. classroom_environment: 
+   - Keywords: atmosphere, environment, class culture, discipline, behavior, interaction, participation, discussion, peer learning, collaboration, respect, bullying, harassment, inclusivity, diversity, student engagement, attendance, punctuality, class timing, group work, teamwork
+
+6. support_services: 
+   - Keywords: library, books, journals, counseling, placement, career guidance, medical, health center, hostel, accommodation, mess, food, canteen, administration, office, staff, support, help desk, student services, extracurricular, sports, clubs, events, scholarships, financial aid
+
+Instructions:
+- Identify ALL relevant topics mentioned in the feedback
+- Assign confidence scores based on how prominently each topic is discussed
+- Higher confidence (0.7-1.0) for directly mentioned topics
+- Medium confidence (0.4-0.6) for indirectly mentioned topics
+- Extract actual keywords from the feedback text
+- Sort topics by confidence (highest first)
+- Include at least one topic, even if confidence is low`;
 
     const result = await model.generateContent(prompt);
     const response = await result.response;
@@ -70,6 +88,9 @@ Return multiple topics if applicable, with confidence scores. Higher confidence 
       }];
     }
     
+    // Sort topics by confidence (highest first)
+    classification.topics.sort((a: any, b: any) => b.confidence - a.confidence);
+    
     console.log('🤖 Gemini API Classification:', classification);
     return classification;
     
@@ -86,9 +107,9 @@ Return multiple topics if applicable, with confidence scores. Higher confidence 
 function fallbackClassification(text: string): ClassificationResult {
   const lowerText = text.toLowerCase();
   
-  // Simple sentiment analysis
-  const positiveWords = ['good', 'great', 'excellent', 'amazing', 'helpful', 'clear', 'best'];
-  const negativeWords = ['bad', 'poor', 'terrible', 'unclear', 'confusing', 'worst', 'useless'];
+  // Enhanced sentiment analysis
+  const positiveWords = ['good', 'great', 'excellent', 'amazing', 'wonderful', 'helpful', 'clear', 'best', 'love', 'fantastic', 'outstanding', 'brilliant', 'effective', 'engaging', 'interesting', 'useful', 'beneficial'];
+  const negativeWords = ['bad', 'poor', 'terrible', 'awful', 'unclear', 'confusing', 'worst', 'useless', 'boring', 'disappointing', 'inadequate', 'insufficient', 'difficult', 'hard', 'complicated', 'outdated'];
   
   let positiveCount = 0;
   let negativeCount = 0;
@@ -106,30 +127,88 @@ function fallbackClassification(text: string): ClassificationResult {
   
   if (positiveCount > negativeCount) {
     sentiment = 'positive';
-    score = 0.5;
+    score = Math.min(positiveCount / (positiveCount + negativeCount + 1), 0.9);
   } else if (negativeCount > positiveCount) {
     sentiment = 'negative';
-    score = -0.5;
+    score = -Math.min(negativeCount / (positiveCount + negativeCount + 1), 0.9);
   }
   
-  // Simple topic detection
+  // Enhanced topic detection with keywords
   const topics = [];
   
-  if (lowerText.includes('teach') || lowerText.includes('professor') || lowerText.includes('instructor')) {
-    topics.push({ topic: 'teaching_style' as const, confidence: 0.7, keywords: ['teaching'] });
+  // Teaching Style Detection
+  const teachingKeywords = ['teach', 'professor', 'instructor', 'faculty', 'lecture', 'explanation', 'teaching method', 'pedagogy', 'delivery', 'communication', 'mentor', 'guide'];
+  let teachingMatches = teachingKeywords.filter(keyword => lowerText.includes(keyword));
+  if (teachingMatches.length > 0) {
+    topics.push({ 
+      topic: 'teaching_style' as const, 
+      confidence: Math.min(0.5 + (teachingMatches.length * 0.1), 0.95), 
+      keywords: teachingMatches 
+    });
   }
   
-  if (lowerText.includes('infrastructure') || lowerText.includes('classroom') || lowerText.includes('lab')) {
-    topics.push({ topic: 'infrastructure' as const, confidence: 0.7, keywords: ['infrastructure'] });
+  // Course Content Detection
+  const contentKeywords = ['syllabus', 'curriculum', 'content', 'material', 'topics', 'course', 'subject', 'chapters', 'lessons', 'notes', 'textbook', 'modules'];
+  let contentMatches = contentKeywords.filter(keyword => lowerText.includes(keyword));
+  if (contentMatches.length > 0) {
+    topics.push({ 
+      topic: 'course_content' as const, 
+      confidence: Math.min(0.5 + (contentMatches.length * 0.1), 0.95), 
+      keywords: contentMatches 
+    });
   }
   
-  if (lowerText.includes('exam') || lowerText.includes('test') || lowerText.includes('assignment')) {
-    topics.push({ topic: 'assessment_methods' as const, confidence: 0.7, keywords: ['exam'] });
+  // Infrastructure Detection
+  const infraKeywords = ['infrastructure', 'classroom', 'lab', 'laboratory', 'facilities', 'equipment', 'wifi', 'internet', 'computer', 'projector', 'board', 'furniture', 'building', 'ac', 'air conditioning'];
+  let infraMatches = infraKeywords.filter(keyword => lowerText.includes(keyword));
+  if (infraMatches.length > 0) {
+    topics.push({ 
+      topic: 'infrastructure' as const, 
+      confidence: Math.min(0.5 + (infraMatches.length * 0.1), 0.95), 
+      keywords: infraMatches 
+    });
   }
   
+  // Assessment Methods Detection
+  const assessmentKeywords = ['exam', 'test', 'quiz', 'assignment', 'evaluation', 'grading', 'marks', 'assessment', 'homework', 'project', 'viva', 'practical'];
+  let assessmentMatches = assessmentKeywords.filter(keyword => lowerText.includes(keyword));
+  if (assessmentMatches.length > 0) {
+    topics.push({ 
+      topic: 'assessment_methods' as const, 
+      confidence: Math.min(0.5 + (assessmentMatches.length * 0.1), 0.95), 
+      keywords: assessmentMatches 
+    });
+  }
+  
+  // Classroom Environment Detection
+  const environmentKeywords = ['atmosphere', 'environment', 'class culture', 'discipline', 'behavior', 'interaction', 'participation', 'discussion', 'engagement', 'attendance'];
+  let environmentMatches = environmentKeywords.filter(keyword => lowerText.includes(keyword));
+  if (environmentMatches.length > 0) {
+    topics.push({ 
+      topic: 'classroom_environment' as const, 
+      confidence: Math.min(0.5 + (environmentMatches.length * 0.1), 0.95), 
+      keywords: environmentMatches 
+    });
+  }
+  
+  // Support Services Detection
+  const supportKeywords = ['library', 'counseling', 'placement', 'career', 'medical', 'hostel', 'mess', 'canteen', 'administration', 'support', 'services', 'extracurricular', 'sports'];
+  let supportMatches = supportKeywords.filter(keyword => lowerText.includes(keyword));
+  if (supportMatches.length > 0) {
+    topics.push({ 
+      topic: 'support_services' as const, 
+      confidence: Math.min(0.5 + (supportMatches.length * 0.1), 0.95), 
+      keywords: supportMatches 
+    });
+  }
+  
+  // If no topics detected, default to course_content
   if (topics.length === 0) {
     topics.push({ topic: 'course_content' as const, confidence: 0.5, keywords: [] });
   }
+  
+  // Sort topics by confidence (highest first)
+  topics.sort((a, b) => b.confidence - a.confidence);
   
   return { sentiment, sentimentScore: score, topics };
 }

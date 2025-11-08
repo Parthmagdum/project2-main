@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { MessageSquare, Clock, CheckCircle, AlertCircle, LogOut, RefreshCw, Send, Filter, Trash2, Edit2, X, Save } from 'lucide-react';
 import { feedbackStorage } from '../../utils/feedbackStorage';
 import { FeedbackItem } from '../../types';
 
@@ -155,9 +154,9 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
 
   const getSentimentIcon = (sentiment: string) => {
     switch (sentiment) {
-      case 'positive': return <CheckCircle className="w-5 h-5" />;
-      case 'negative': return <AlertCircle className="w-5 h-5" />;
-      default: return <MessageSquare className="w-5 h-5" />;
+      case 'positive': return <i className="bi bi-check-circle-fill text-lg"></i>;
+      case 'negative': return <i className="bi bi-exclamation-circle-fill text-lg"></i>;
+      default: return <i className="bi bi-chat-square-text-fill text-lg"></i>;
     }
   };
 
@@ -185,7 +184,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
                 className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
                 title="Refresh to check for new replies"
               >
-                <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+                <i className={`bi bi-arrow-clockwise ${refreshing ? 'animate-spin' : ''}`}></i>
                 Refresh
               </button>
               <button
@@ -198,7 +197,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
                 onClick={onLogout}
                 className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
               >
-                <LogOut className="w-4 h-4" />
+                <i className="bi bi-box-arrow-right"></i>
                 Logout
               </button>
             </div>
@@ -215,7 +214,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
           </div>
         ) : feedback.length === 0 ? (
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
-            <MessageSquare className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+            <i className="bi bi-chat-square-text text-gray-400 mx-auto mb-4" style={{ fontSize: '4rem' }}></i>
             <h3 className="text-xl font-semibold text-gray-900 mb-2">No feedback yet</h3>
             <p className="text-gray-600 mb-6">You haven't submitted any feedback yet.</p>
             <button
@@ -230,7 +229,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
             {/* Info Banner - All Feedback Displayed */}
             <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-lg p-4">
               <div className="flex items-start gap-3">
-                <CheckCircle className="w-6 h-6 text-blue-600 mt-0.5 flex-shrink-0" />
+                <i className="bi bi-check-circle-fill text-blue-600 mt-0.5 flex-shrink-0 text-xl"></i>
                 <div className="flex-1">
                   <h3 className="font-semibold text-blue-900 text-lg">
                     ✨ All Your Feedback is Displayed Below
@@ -273,7 +272,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
                 </div>
                 <div className="flex flex-wrap items-center gap-3">
                   <div className="flex items-center gap-2">
-                    <Filter className="w-4 h-4 text-gray-400" />
+                    <i className="bi bi-funnel text-gray-400"></i>
                     <select
                       value={sentimentFilter}
                       onChange={(e) => setSentimentFilter(e.target.value as any)}
@@ -315,7 +314,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
             {filteredFeedback.length === 0 && feedback.length > 0 && (
               <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
                 <div className="flex items-start gap-3">
-                  <AlertCircle className="w-5 h-5 text-orange-600 mt-0.5 flex-shrink-0" />
+                  <i className="bi bi-exclamation-circle-fill text-orange-600 mt-0.5 flex-shrink-0 text-lg"></i>
                   <div>
                     <h3 className="font-semibold text-orange-900">No feedback matches your filters</h3>
                     <p className="text-sm text-orange-700 mt-1">
@@ -347,16 +346,33 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
                     <div className="flex justify-between items-start">
                       <div>
                         <h3 className="text-lg font-semibold text-gray-900">{item.courseName}</h3>
-                        <div className="flex gap-4 mt-2 text-sm text-gray-600">
+                        <div className="flex gap-4 mt-2 text-sm text-gray-600 flex-wrap">
                           <span>{item.department}</span>
+                          {item.year && (
+                            <>
+                              <span>•</span>
+                              <span>
+                                {item.year === '1' ? 'FE' :
+                                 item.year === '2' ? 'SE' :
+                                 item.year === '3' ? 'TE' :
+                                 item.year === '4' ? 'BE' : `Year ${item.year}`}
+                              </span>
+                            </>
+                          )}
                           <span>•</span>
-                          <span>{item.semester}</span>
+                          <span>Sem {item.semester}</span>
+                          {item.className && (
+                            <>
+                              <span>•</span>
+                              <span>{item.className}</span>
+                            </>
+                          )}
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
                         {item.facultyReply && (
                           <div className="flex items-center gap-1 px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-medium">
-                            <MessageSquare className="w-3 h-3" />
+                            <i className="bi bi-chat-square-text" style={{ fontSize: '0.75rem' }}></i>
                             Replied
                           </div>
                         )}
@@ -383,6 +399,27 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
                         ))}
                       </div>
                     )}
+
+                    {/* Overall Rating Display */}
+                    {item.overallRating && (
+                      <div className="mb-4 flex items-center gap-2">
+                        <span className="text-sm font-medium text-gray-700">Your Rating:</span>
+                        <div className="flex items-center gap-1">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <i
+                              key={star}
+                              className={`bi ${star <= item.overallRating! ? 'bi-star-fill' : 'bi-star'} ${
+                                star <= item.overallRating! ? 'text-yellow-400' : 'text-gray-300'
+                              }`}
+                              style={{ fontSize: '1rem' }}
+                            ></i>
+                          ))}
+                          <span className="ml-2 text-sm font-semibold text-gray-700">
+                            {item.overallRating}/5
+                          </span>
+                        </div>
+                      </div>
+                    )}
                     
                     <div className="mb-4">
                       <div className="flex justify-between items-start mb-2">
@@ -396,7 +433,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
                               className="flex items-center gap-1 px-2 py-1 text-xs text-blue-600 hover:bg-blue-50 rounded transition-colors"
                               title="Edit feedback"
                             >
-                              <Edit2 className="w-3 h-3" />
+                              <i className="bi bi-pencil-square" style={{ fontSize: '0.75rem' }}></i>
                               Edit
                             </button>
                           )}
@@ -406,7 +443,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
                             className="flex items-center gap-1 px-2 py-1 text-xs text-red-600 hover:bg-red-50 rounded transition-colors"
                             title="Delete feedback"
                           >
-                            <Trash2 className="w-3 h-3" />
+                            <i className="bi bi-trash3" style={{ fontSize: '0.75rem' }}></i>
                             Delete
                           </button>
                         </div>
@@ -428,14 +465,14 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
                               disabled={savingEdit || !editText.trim()}
                               className="flex items-center gap-1 px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                              <Save className="w-3 h-3" />
+                              <i className="bi bi-check-lg" style={{ fontSize: '0.75rem' }}></i>
                               {savingEdit ? 'Saving...' : 'Save Changes'}
                             </button>
                             <button
                               onClick={handleCancelEdit}
                               className="px-3 py-1.5 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors text-sm"
                             >
-                              <X className="w-3 h-3 inline mr-1" />
+                              <i className="bi bi-x inline mr-1" style={{ fontSize: '0.75rem' }}></i>
                               Cancel
                             </button>
                           </div>
@@ -453,7 +490,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
                       <div className="mt-4 pt-4 border-t border-gray-200">
                         <div className="bg-purple-50 border border-purple-100 rounded-lg p-4">
                           <div className="flex items-center gap-2 mb-2">
-                            <MessageSquare className="w-4 h-4 text-purple-600" />
+                            <i className="bi bi-chat-square-text-fill text-purple-600"></i>
                             <h4 className="text-sm font-semibold text-purple-900">Faculty Response:</h4>
                           </div>
                           <p className="text-gray-800 leading-relaxed">{item.facultyReply}</p>
@@ -497,7 +534,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
                                   disabled={submittingReply || !replyText.trim()}
                                   className="flex items-center gap-1 px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                  <Send className="w-3 h-3" />
+                                  <i className="bi bi-send" style={{ fontSize: '0.75rem' }}></i>
                                   {submittingReply ? 'Sending...' : 'Send Reply'}
                                 </button>
                                 <button
@@ -513,7 +550,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
                               onClick={() => handleReplyToFaculty(item.id)}
                               className="mt-3 flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
                             >
-                              <Send className="w-4 h-4" />
+                              <i className="bi bi-send"></i>
                               Reply to Faculty
                             </button>
                           )}
@@ -531,7 +568,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
 
                     {/* Footer */}
                     <div className="flex items-center gap-2 mt-4 text-sm text-gray-500">
-                      <Clock className="w-4 h-4" />
+                      <i className="bi bi-clock"></i>
                       <span>
                         Submitted on {new Date(item.submittedAt).toLocaleDateString()} at{' '}
                         {new Date(item.submittedAt).toLocaleTimeString()}
@@ -546,7 +583,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
             {filteredFeedback.length > 0 && (
               <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
                 <div className="flex items-center justify-center gap-2">
-                  <CheckCircle className="w-5 h-5 text-green-600" />
+                  <i className="bi bi-check-circle-fill text-green-600 text-lg"></i>
                   <p className="text-sm text-green-800 font-medium">
                     ✅ End of List - All {filteredFeedback.length} feedback items loaded successfully
                   </p>

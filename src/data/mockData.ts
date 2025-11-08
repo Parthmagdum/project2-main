@@ -2,8 +2,8 @@ import { FeedbackItem, Alert, User, InsightRecommendation, AnalyticsData } from 
 
 export const mockUser: User = {
   id: '1',
-  name: 'Dr. Sarah Johnson',
-  email: 'sarah.johnson@university.edu',
+  name: 'Admin',
+  email: 'admin@university.edu',
   role: 'admin',
   department: 'Academic Affairs',
   permissions: ['view_all', 'manage_alerts', 'export_data', 'system_admin']
