@@ -7,6 +7,7 @@ DROP POLICY IF EXISTS "Enable read for all users" ON students;
 DROP POLICY IF EXISTS "Enable insert for all users" ON feedback;
 DROP POLICY IF EXISTS "Enable read for all users" ON feedback;
 DROP POLICY IF EXISTS "Enable update for all users" ON feedback;
+DROP POLICY IF EXISTS "Enable delete for all users" ON feedback;
 
 -- Drop existing tables if they exist (careful - this deletes data!)
 -- Comment out these lines if you want to keep existing data
@@ -87,6 +88,11 @@ CREATE POLICY "Enable read for all users" ON feedback
 -- Allow anyone to update feedback (for faculty replies)
 CREATE POLICY "Enable update for all users" ON feedback
   FOR UPDATE
+  USING (true);
+
+-- Allow anyone to delete feedback (for students to delete their own feedback)
+CREATE POLICY "Enable delete for all users" ON feedback
+  FOR DELETE
   USING (true);
 
 -- Grant necessary permissions

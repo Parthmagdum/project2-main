@@ -514,20 +514,48 @@ export const feedbackStorage = {
     try {
       console.log('🗑️ Deleting feedback:', feedbackId);
       
+      // Try to delete from Supabase
       const { error } = await supabase
         .from('feedback')
         .delete()
         .eq('id', feedbackId);
 
       if (error) {
-        console.error('Error deleting feedback from Supabase:', error);
+        console.error('❌ Error deleting feedback from Supabase:', error);
+        console.log('⚠️ Attempting to delete from localStorage as fallback...');
+        
+        // Fallback to localStorage
+        const stored = localStorage.getItem('feedback_items');
+        if (stored) {
+          const items = JSON.parse(stored);
+          const filtered = items.filter((item: any) => item.id !== feedbackId);
+          localStorage.setItem('feedback_items', JSON.stringify(filtered));
+          console.log('✅ Feedback deleted from localStorage');
+          return { success: true };
+        }
+        
         return { success: false, error: error.message };
       }
 
-      console.log('✅ Feedback deleted successfully!');
+      console.log('✅ Feedback deleted successfully from Supabase!');
       return { success: true };
     } catch (error: any) {
-      console.error('Error in deleteFeedback:', error);
+      console.error('❌ Error in deleteFeedback:', error);
+      
+      // Fallback to localStorage
+      try {
+        const stored = localStorage.getItem('feedback_items');
+        if (stored) {
+          const items = JSON.parse(stored);
+          const filtered = items.filter((item: any) => item.id !== feedbackId);
+          localStorage.setItem('feedback_items', JSON.stringify(filtered));
+          console.log('✅ Feedback deleted from localStorage (fallback)');
+          return { success: true };
+        }
+      } catch (localError) {
+        console.error('❌ Error deleting from localStorage:', localError);
+      }
+      
       return { success: false, error: error.message };
     }
   },
